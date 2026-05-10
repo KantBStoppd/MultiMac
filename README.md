@@ -101,7 +101,6 @@ It launches MultiMac with proper root privileges.
 
 Progress and logs appear in the UI and in:
 
-```
 
 ---
 
