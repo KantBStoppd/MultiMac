@@ -1,5 +1,5 @@
 # **MultiMac — Multi‑macOS USB Installer Builder**
-[![Download MultiMac](https://img.shields.io/badge/Download-MultiMac-blue)](https://www.dropbox.com/scl/fi/ocpz2dk7gzoyi223patv4/MultiMac.dmg?rlkey=88hd7l9uxk4kw5o5lo61f5v4i&st=rui4agxq&dl=1))
+[![Download MultiMac](https://img.shields.io/badge/Download-MultiMac-blue)](https://www.dropbox.com/scl/fi/ocpz2dk7gzoyi223patv4/MultiMac.dmg?rlkey=88hd7l9uxk4kw5o5lo61f5v4i&st=rui4agxq&dl=1)
 
 A fast, reliable, GUI‑driven tool for creating **multiple macOS installers on a single USB drive**.  
 MultiMac automatically partitions the target disk, formats each slice, and runs Apple’s official `createinstallmedia` for every macOS version you select.
@@ -20,6 +20,36 @@ Built for technicians, power users, and anyone who maintains multiple Macs.
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="assets/ss1.png" width="80%" alt="Screenshot 1">
+</p>
+
+<p align="center">
+  <img src="assets/ss2.png" width="80%" alt="Screenshot 2">
+</p>
+
+<p align="center">
+  <img src="assets/ss3.png" width="80%" alt="Screenshot 3">
+</p>
+
+<p align="center">
+  <img src="assets/ss4.png" width="80%" alt="Screenshot 4">
+</p>
+
+<p align="center">
+  <img src="assets/ss5.png" width="80%" alt="Screenshot 5">
+</p>
+
+<p align="center">
+  <img src="assets/ss6.png" width="80%" alt="Screenshot 6">
+</p>
+
+<p align="center">
+  <img src="assets/ss7.png" width="80%" alt="Screenshot 7">
+</p>
+
 ## 🖥️ Supported macOS Versions
 MultiMac supports all macOS installers that use `createinstallmedia`, including:
 
@@ -33,7 +63,7 @@ MultiMac supports all macOS installers that use `createinstallmedia`, including:
 - macOS Sonoma  
 - macOS Sequoia  
 
-(Additional versions can be added easily.)
+
 
 ---
 
@@ -72,64 +102,6 @@ It launches MultiMac with proper root privileges.
 Progress and logs appear in the UI and in:
 
 ```
-~/MultiMacOSInstaller.log
-```
-
----
-
-## 📁 Project Structure
-```
-MultiMac/
-│
-├── src/
-│   ├── engine/              # Partitioning + CIM engine
-│   ├── ui/                  # wxPython GUI
-│   └── main.py              # App entry point
-│
-├── assets/                  # Icons, screenshots, banners
-├── dist/                    # PyInstaller output (ignored)
-├── build/                   # PyInstaller temp files (ignored)
-│
-├── README.md
-├── LICENSE
-└── .gitignore
-```
-
----
-
-## 🛠️ Building From Source
-Install dependencies:
-
-```
-pip install -r requirements.txt
-```
-
-Build the app:
-
-```
-pyinstaller main.spec
-```
-
-The final `.app` bundle will appear in `dist/`.
-
----
-
-## 🔐 Sudo Companion - MultiMac Launcher.app
-macOS does not allow GUI apps to elevate themselves.  
-MultiMac uses a tiny AppleScript wrapper to launch the binary with root privileges:
-
-```applescript
-do shell script "/Applications/MultiMac.app/Contents/MacOS/MultiMac" with administrator privileges
-```
-
-This ensures:
-
-- `gpt add`  
-- `diskutil eraseVolume`  
-- raw‑device access  
-- `createinstallmedia`  
-
-all run correctly.
 
 ---
 
