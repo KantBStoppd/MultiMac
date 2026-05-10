@@ -99,7 +99,7 @@ It launches MultiMac with proper root privileges.
    - Format each slice  
    - Run `createinstallmedia` for each installer  
 
-Progress and logs appear in the UI and in:
+Progress and logs appear in the UI 
 
 
 ---
