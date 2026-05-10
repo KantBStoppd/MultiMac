@@ -1,4 +1,5 @@
 # **MultiMac — Multi‑macOS USB Installer Builder**
+[![Download MultiMac](https://img.shields.io/badge/Download-MultiMac-blue)](https://www.dropbox.com/scl/fi/ocpz2dk7gzoyi223patv4/MultiMac.dmg?rlkey=88hd7l9uxk4kw5o5lo61f5v4i&st=rui4agxq&dl=1))
 
 A fast, reliable, GUI‑driven tool for creating **multiple macOS installers on a single USB drive**.  
 MultiMac automatically partitions the target disk, formats each slice, and runs Apple’s official `createinstallmedia` for every macOS version you select.
