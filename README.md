@@ -89,11 +89,12 @@ It launches MultiMac with proper root privileges.
 ## 🔧 Usage
 1. Launch **MultiMac Launcher.app**  
 2. Enter your administrator password  
-3. MultiMac opens with full root privileges  
-4. Select your macOS installers  
-5. Select your target USB drive  
-6. Click **Build**  
-7. MultiMac will:
+3. MultiMac opens with full root privileges 
+4. Select your target USB drive 
+5. Select your macOS installers  
+6. Preview build summary and click next  
+7. Click **Start**  
+8. MultiMac will:
    - Erase the disk  
    - Create GPT partitions  
    - Format each slice  
