@@ -100,36 +100,10 @@ It launches MultiMac with proper root privileges.
    - Format each slice  
    - Run `createinstallmedia` for each installer  
 
-Progress and logs appear in the UI 
-
-
----
-
-## 📝 Logging
-All engine logs are written to:
-
-```
-~/MultiMacOSInstaller.log
-```
-
-This includes:
-
-- Commands executed  
-- Partition layout  
-- CIM output  
-- Errors and tracebacks  
-
 ---
 
 ## 📄 License
-MIT License (recommended).  
-You can change this to any license you prefer.
-
----
-
-## 🤝 Contributing
-Pull requests are welcome.  
-If you want to add new macOS versions, improve the UI, or enhance the engine, feel free to open an issue.
+MIT License
 
 ---
 
