@@ -52,6 +52,8 @@ def detect_installers():
             name = "Sonoma"
         elif "sequoia" in raw:
             name = "Sequoia"
+        elif "tahoe" in raw:
+            name= "Tahoe"
         else:
             continue  # skip unsupported installers
 
