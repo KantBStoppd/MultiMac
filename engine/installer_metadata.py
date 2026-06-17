@@ -1,4 +1,6 @@
 INSTALLER_METADATA = [
+    {"name": "macOS Tahoe", "major":
+ "26", "icon": "tahoe"},
     {"name": "macOS Sequoia", "major": "15", "icon": "sequoia"},
     {"name": "macOS Sonoma", "major": "14", "icon": "sonoma"},
     {"name": "macOS Ventura", "major": "13", "icon": "ventura"},

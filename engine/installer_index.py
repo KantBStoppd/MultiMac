@@ -14,6 +14,7 @@ ICON_MAP = {
     "13": "ventura.png",
     "14": "sonoma.png",
     "15": "sequoia.png",
+    "26": "tahoe.png",
     
 }
 
@@ -25,6 +26,7 @@ TITLE_ICON_MAP = {
     "macOS Ventura": "ventura.png",
     "macOS Sonoma": "sonoma.png",
     "macOS Sequoia": "sequoia.png",
+    "macoS Tahoe": "tahoe.png",
 
 }
 

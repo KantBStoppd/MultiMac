@@ -130,6 +130,7 @@ class BuildEngine:
             "Ventura": 30,
             "Sonoma": 30,
             "Sequoia": 30,
+            "Tahoe": 30,
         }
         return table.get(name, 16)
 
