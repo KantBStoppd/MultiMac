@@ -92,7 +92,7 @@ class WelcomePanel(wx.Panel):
         self.btn_iso = GradientButton(self, label="Convert macOS Installer to ISO")
         main_sizer.Add(self.btn_iso, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.TOP, 20)
 
-        self.SetSizer(main_sizer
+        self.SetSizer(main_sizer)
 # =========================================================
 # Drive Selection Panel
 # =========================================================
@@ -119,7 +119,35 @@ class DrivePanel(wx.Panel):
         self.btn_next = GradientButton(self, label="Next")
         self.btn_next.Disable()
 
-        btn_sizer.Add(self.btn_back
+        btn_sizer.Add(self.btn_back, 0, wx.ALL, 10)
+        btn_sizer.Add(self.btn_next, 0, wx.ALL, 10)
+        main_sizer.Add(btn_sizer, 0, wx.ALIGN_LEFT)
+
+        self.SetSizer(main_sizer)
+
+        self.btn_back.Bind(wx.EVT_BUTTON, self._on_back)
+        self.btn_next.Bind(wx.EVT_BUTTON, self._on_next)
+
+    def RefreshDrives(self):
+        drives = detect_drives()
+        self.usb_picker.LoadDrives(drives)
+        self.btn_next.Disable()
+        self.selected_drive = None
+
+    def _on_drive_selected(self, drive_dict):
+        self.selected_drive = drive_dict
+        self.btn_next.Enable()
+
+    def _on_back(self, event):
+        if self.on_back:
+            self.on_back()
+
+    def _on_next(self, event=None):
+        if not self.selected_drive:
+            wx.MessageBox("Please select a USB drive.", "No Drive Selected")
+            return
+        self.on_next(self.selected_drive)
+
 # =========================================================
 # Installers Panel (UI1, fixed tiles, Tahoe removed)
 # =========================================================
@@ -459,7 +487,7 @@ class ProgressPanel(wx.Panel):
             size=(500, 250)
         )
         main.Add(self.log_ctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
-# Cancel button
+        # Cancel button
         self.btn_cancel = GradientButton(self, label="Cancel")
         self.btn_cancel.Bind(wx.EVT_BUTTON, self._on_cancel)
         main.Add(self.btn_cancel, 0, wx.ALL, 10)
@@ -541,6 +569,7 @@ class ProgressPanel(wx.Panel):
             self.log_ctrl.AppendText(message + "\n")
         except Exception:
             pass
+            
 class SuccessPanel(wx.Panel):
     def __init__(self, parent, installers, drive_name, on_finish):
         super().__init__(parent)
