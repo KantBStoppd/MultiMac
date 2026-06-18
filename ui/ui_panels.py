@@ -23,9 +23,7 @@ from logic_drive import detect_drives
 from engine.build_engine import BuildEngine
 from engine.utils import resource_path
 from ui.ui_widgets import GradientButton
-# ---------------------------------------------------------
-# Color map for macOS versions
-# ---------------------------------------------------------
+
 VERSION_COLORS = {
     "Sierra": wx.Colour(100, 140, 100),
     "High Sierra": wx.Colour(80, 120, 80),
@@ -36,9 +34,8 @@ VERSION_COLORS = {
     "Ventura": wx.Colour(255, 140, 0),
     "Sonoma": wx.Colour(0, 150, 100),
     "Sequoia": wx.Colour(0, 110, 160),
+    "Tahoe": wx.Colour(52, 120, 180),
 }
-
-
 # =========================================================
 # Welcome Panel
 # =========================================================
@@ -95,9 +92,7 @@ class WelcomePanel(wx.Panel):
         self.btn_iso = GradientButton(self, label="Convert macOS Installer to ISO")
         main_sizer.Add(self.btn_iso, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.TOP, 20)
 
-        self.SetSizer(main_sizer)
-
-
+        self.SetSizer(main_sizer
 # =========================================================
 # Drive Selection Panel
 # =========================================================
@@ -124,36 +119,7 @@ class DrivePanel(wx.Panel):
         self.btn_next = GradientButton(self, label="Next")
         self.btn_next.Disable()
 
-        btn_sizer.Add(self.btn_back, 0, wx.ALL, 10)
-        btn_sizer.Add(self.btn_next, 0, wx.ALL, 10)
-        main_sizer.Add(btn_sizer, 0, wx.ALIGN_LEFT)
-
-        self.SetSizer(main_sizer)
-
-        self.btn_back.Bind(wx.EVT_BUTTON, self._on_back)
-        self.btn_next.Bind(wx.EVT_BUTTON, self._on_next)
-
-    def RefreshDrives(self):
-        drives = detect_drives()
-        self.usb_picker.LoadDrives(drives)
-        self.btn_next.Disable()
-        self.selected_drive = None
-
-    def _on_drive_selected(self, drive_dict):
-        self.selected_drive = drive_dict
-        self.btn_next.Enable()
-
-    def _on_back(self, event):
-        if self.on_back:
-            self.on_back()
-
-    def _on_next(self, event=None):
-        if not self.selected_drive:
-            wx.MessageBox("Please select a USB drive.", "No Drive Selected")
-            return
-        self.on_next(self.selected_drive)
-
-
+        btn_sizer.Add(self.btn_back
 # =========================================================
 # Installers Panel (UI1, fixed tiles, Tahoe removed)
 # =========================================================
@@ -182,6 +148,7 @@ class InstallersPanel(wx.Panel):
             "Ventura",
             "Sonoma",
             "Sequoia",
+            "Tahoe",
         ]
 
         self.tiles = {}
@@ -254,13 +221,10 @@ class InstallersPanel(wx.Panel):
 
         self.on_next(selected_installers)
 
-
     def _on_installer_selected(self, event):
         for tile in self.tiles.values():
             tile.selected = (tile.installer_path == event.path)
         self.Layout()
-
-
 # =========================================================
 # Overview Panel
 # =========================================================
@@ -303,14 +267,8 @@ class OverviewPanel(wx.Panel):
         self.btn_start.Bind(wx.EVT_BUTTON, self._on_start)
 
     def _load_icon(self, name):
-        """
-        Loads and scales a version icon safely.
-        Returns a wx.Bitmap or None.
-        """
-
         bmp = load_icon(name)
 
-        # Debug logging
         if bmp is None:
             print(f"[VersionTile] Icon missing for '{name}'")
             return None
@@ -389,8 +347,6 @@ class OverviewPanel(wx.Panel):
 
     def _on_start(self, event):
         self.on_start(self.selected_installers, self.selected_drive)
-
-
 # =========================================================
 # Progress Panel
 # =========================================================
@@ -433,7 +389,6 @@ class ProgressPanel(wx.Panel):
         # Run engine in background thread
         threading.Thread(target=self.engine.run, daemon=True).start()
 
-        # Timers
         wx.CallLater(50, self._smooth_progress_tick)
         wx.CallLater(1000, self._update_eta)
 
@@ -504,8 +459,7 @@ class ProgressPanel(wx.Panel):
             size=(500, 250)
         )
         main.Add(self.log_ctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
-
-        # Cancel button
+# Cancel button
         self.btn_cancel = GradientButton(self, label="Cancel")
         self.btn_cancel.Bind(wx.EVT_BUTTON, self._on_cancel)
         main.Add(self.btn_cancel, 0, wx.ALL, 10)
@@ -587,9 +541,6 @@ class ProgressPanel(wx.Panel):
             self.log_ctrl.AppendText(message + "\n")
         except Exception:
             pass
-
-
-            
 class SuccessPanel(wx.Panel):
     def __init__(self, parent, installers, drive_name, on_finish):
         super().__init__(parent)
@@ -606,18 +557,15 @@ class SuccessPanel(wx.Panel):
             check_img = wx.StaticBitmap(self, bitmap=check_bmp)
             main.Add(check_img, 0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 20)
         else:
-            # Fallback if the icon is missing
             fallback = wx.StaticText(self, label="✔")
             fallback.SetFont(wx.Font(48, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
             fallback.SetForegroundColour(wx.Colour(0, 200, 0))
             main.Add(fallback, 0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 20)
 
-        # --- Title ---
         title = wx.StaticText(self, label="Build Complete!")
         title.SetFont(wx.Font(20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
         main.Add(title, 0, wx.ALIGN_CENTER | wx.BOTTOM, 10)
 
-        # --- Subtitle ---
         msg = wx.StaticText(
             self,
             label=f"Your Multi‑macOS USB installer has been successfully created on {drive_name}."
@@ -625,7 +573,6 @@ class SuccessPanel(wx.Panel):
         msg.SetFont(wx.Font(13, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
         main.Add(msg, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
-        # --- Installer List ---
         list_box = wx.StaticBox(self, label="Included Installers")
         list_sizer = wx.StaticBoxSizer(list_box, wx.VERTICAL)
 
@@ -634,12 +581,12 @@ class SuccessPanel(wx.Panel):
 
         main.Add(list_sizer, 0, wx.ALIGN_CENTER | wx.ALL, 10)
 
-        # --- Finish Button ---
         btn = GradientButton(self, label="Finish")
         btn.Bind(wx.EVT_BUTTON, lambda evt: self.on_finish())
         main.Add(btn, 0, wx.ALIGN_CENTER | wx.ALL, 20)
 
         self.SetSizer(main)
+
 
 class ErrorPanel(wx.Panel):
     def __init__(self, parent, error_message, on_back, on_troubleshoot):
@@ -673,6 +620,7 @@ class ErrorPanel(wx.Panel):
 
         self.SetSizer(main)
 
+
 class TroubleshootingPanel(wx.Panel):
     def __init__(self, parent, on_back):
         super().__init__(parent)
@@ -681,16 +629,13 @@ class TroubleshootingPanel(wx.Panel):
 
         main = wx.BoxSizer(wx.VERTICAL)
 
-        # Title
         title = wx.StaticText(self, label="Troubleshooting")
         title.SetFont(wx.Font(18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
         main.Add(title, 0, wx.LEFT | wx.TOP | wx.RIGHT, 20)
 
-        # Divider (matches ProgressPanel)
         divider = wx.StaticLine(self)
         main.Add(divider, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 15)
 
-        # Troubleshooting item(s)
         item = ExpandableItem(
             self,
             title="Sierra installer fails with 'not a valid mount point'",
@@ -702,7 +647,6 @@ class TroubleshootingPanel(wx.Panel):
         )
         main.Add(item, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
-        # Back button aligned with app style
         back_btn = GradientButton(self, label="Back")
         back_btn.Bind(wx.EVT_BUTTON, self._handle_back)
         main.Add(back_btn, 0, wx.ALL, 15)
@@ -711,6 +655,7 @@ class TroubleshootingPanel(wx.Panel):
 
     def _handle_back(self, event):
         self.on_back()
+
 
 class ConvertISOPanel(wx.Panel):
     def __init__(self, parent, mainframe):
@@ -728,22 +673,18 @@ class ConvertISOPanel(wx.Panel):
         title.SetFont(wx.Font(18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
         vbox.Add(title, 0, wx.ALL, 10)
 
-        # Installer dropdown
         vbox.Add(wx.StaticText(self, label="Select macOS Installer:"), 0, wx.LEFT | wx.TOP, 10)
         self.dropdown = wx.ComboBox(self, style=wx.CB_READONLY)
         vbox.Add(self.dropdown, 0, wx.EXPAND | wx.ALL, 10)
 
-        # Output folder picker
         vbox.Add(wx.StaticText(self, label="Output Folder:"), 0, wx.LEFT, 10)
         self.output_picker = wx.DirPickerCtrl(self, message="Choose output folder")
         vbox.Add(self.output_picker, 0, wx.EXPAND | wx.ALL, 10)
 
-        # Convert button
         self.convert_btn = wx.Button(self, label="Convert to ISO")
         self.convert_btn.Bind(wx.EVT_BUTTON, self.on_convert)
         vbox.Add(self.convert_btn, 0, wx.ALL, 10)
 
-        # Log output
         self.log_box = wx.TextCtrl(self, style=wx.TE_MULTILINE | wx.TE_READONLY)
         vbox.Add(self.log_box, 1, wx.EXPAND | wx.ALL, 10)
 
@@ -785,9 +726,3 @@ class ConvertISOPanel(wx.Panel):
                 wx.CallAfter(self.convert_btn.Enable)
 
         threading.Thread(target=run).start()
-
-
-
-
-
-
