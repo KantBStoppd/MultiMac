@@ -76,24 +76,13 @@ def detect_installers():
 
 def validate_installer_structure(installer):
     """
-    Ensures the installer has the required SharedSupport files.
+    Kraig’s rule: If it's named Install macOS *.app, it's valid.
+    No internal structure validation.
     """
-    path = installer["path"]
-    shared = os.path.join(path, "Contents", "SharedSupport")
-
-    required = [
-        "InstallESD.dmg",
-        "BaseSystem.dmg",
-        "InstallInfo.plist",
-    ]
-
-    for filename in required:
-        full = os.path.join(shared, filename)
-        if not os.path.exists(full):
-            return f"{installer['name']} is missing {filename}"
-
+    name = os.path.basename(installer["path"])
+    if not name.startswith("Install macOS ") or not name.endswith(".app"):
+        return f"{installer['name']} has an invalid name"
     return None
-
 
 def validate_drive_capacity(installer, drive):
     installer_size = installer["size_bytes"]
