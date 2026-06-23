@@ -691,6 +691,10 @@ class ConvertISOPanel(wx.Panel):
         super().__init__(parent)
         self.mainframe = mainframe
         self.engine = mainframe.engine
+
+        # Hook engine event callback
+        self.engine.on_engine_event = self.on_engine_event
+
         self.installers = []
         self.build_ui()
         self.refresh_installers()
@@ -714,6 +718,12 @@ class ConvertISOPanel(wx.Panel):
         self.convert_btn.Bind(wx.EVT_BUTTON, self.on_convert)
         vbox.Add(self.convert_btn, 0, wx.ALL, 10)
 
+        # --- REAL PROGRESS BAR ---
+        self.progress = wx.Gauge(self, range=100, style=wx.GA_HORIZONTAL)
+        self.progress.SetValue(0)
+        vbox.Add(self.progress, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+
+        # --- LOG BOX ---
         self.log_box = wx.TextCtrl(self, style=wx.TE_MULTILINE | wx.TE_READONLY)
         vbox.Add(self.log_box, 1, wx.EXPAND | wx.ALL, 10)
 
@@ -728,6 +738,40 @@ class ConvertISOPanel(wx.Panel):
         self.log_box.AppendText(msg + "\n")
         self.engine.write_log("[ISO] " + msg)
 
+    # ---------------------------------------------------------
+    # ENGINE EVENT HANDLER (Option C)
+    # ---------------------------------------------------------
+    def on_engine_event(self, data):
+        evt = data.get("event")
+
+        mapping = {
+            "SPARSEIMAGE_CREATED": 10,
+            "CIM_STARTED": 20,
+            "CIM_FINISHED": 80,
+            "ISO_CONVERT_STARTED": 85,
+            "ISO_CONVERT_FINISHED": 100,
+        }
+
+        if evt in mapping:
+            wx.CallAfter(self.progress.SetValue, mapping[evt])
+
+        if evt == "ISO_CONVERT_FINISHED":
+            wx.CallAfter(self.log, "ISO conversion finished.")
+            wx.CallLater(300, self.open_output_folder)
+
+    # ---------------------------------------------------------
+    # OPEN OUTPUT FOLDER ON COMPLETION
+    # ---------------------------------------------------------
+    def open_output_folder(self):
+        folder = self.output_picker.GetPath()
+        if folder and os.path.isdir(folder):
+            subprocess.Popen(["open", folder])
+
+        self.convert_btn.Enable()
+
+    # ---------------------------------------------------------
+    # START CONVERSION
+    # ---------------------------------------------------------
     def on_convert(self, event):
         idx = self.dropdown.GetSelection()
         if idx == wx.NOT_FOUND:
@@ -744,6 +788,7 @@ class ConvertISOPanel(wx.Panel):
 
         self.log(f"Starting ISO conversion for {installer.name}...")
         self.convert_btn.Disable()
+        self.progress.SetValue(0)
 
         def run():
             try:
@@ -751,7 +796,6 @@ class ConvertISOPanel(wx.Panel):
                 wx.CallAfter(self.log, f"ISO created: {iso_path}")
             except Exception as e:
                 wx.CallAfter(self.log, f"Error: {e}")
-            finally:
                 wx.CallAfter(self.convert_btn.Enable)
 
-        threading.Thread(target=run).start()
+        threading.Thread(target=run, daemon=True).start()
