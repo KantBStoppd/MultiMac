@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import traceback
 import datetime
@@ -43,6 +44,7 @@ class BuildEngine:
         on_complete: Optional[Callable[[], None]] = None,
         on_error: Optional[Callable[[str], None]] = None,
         on_log: Optional[Callable[[str], None]] = None,
+        on_engine_event: Optional[Callable[[dict], None]] = None,
     ):
         self.installers = installers or []
         self.device = drive.get("device") if drive else None
@@ -52,6 +54,7 @@ class BuildEngine:
         self.on_error = on_error or (lambda msg: None)
         self.on_log = on_log or (lambda msg: None)
         self.on_installer_done = lambda name: None
+        self.on_engine_event = on_engine_event
 
     def get_installers(self):
         return find_installers_in_applications()
@@ -60,7 +63,7 @@ class BuildEngine:
         write_log(msg)
 
     # ---------------------------------------------------------
-    # Public entry point
+    # Public entry point (USB multi‑installer build)
     # ---------------------------------------------------------
     def run(self) -> BuildResult:
         # --- REQUIRED ROOT CHECK ---
@@ -114,12 +117,11 @@ class BuildEngine:
             self.on_error(msg)
             return BuildResult(success=False, error=msg)
 
-
     # ---------------------------------------------------------
     # Preflight checks
     # ---------------------------------------------------------
     def _partition_size_for(self, name: str) -> int:
-        """Return required partition size in bytes."""
+        """Return required partition size in GB."""
         table = {
             "Sierra": 16,
             "High Sierra": 16,
@@ -147,11 +149,12 @@ class BuildEngine:
         if size_bytes is None:
             raise RuntimeError("Could not determine disk size.")
 
-        required = sum(self._partition_size_for(i.name) for i in self.installers)
+        required_gb = sum(self._partition_size_for(i.name) for i in self.installers)
+        required_bytes = required_gb * (1024**3)
 
-        if size_bytes < required:
+        if size_bytes < required_bytes:
             raise RuntimeError(
-                f"Target disk too small. Requires at least {required / (1024**3):.0f} GB."
+                f"Target disk too small. Requires at least {required_gb:.0f} GB."
             )
 
     # ---------------------------------------------------------
@@ -179,7 +182,7 @@ class BuildEngine:
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True
+            text=True,
         )
         output_lines = []
         for line in proc.stdout:
@@ -196,17 +199,29 @@ class BuildEngine:
             )
         return output
 
+    def _event(self, name: str):
+        if hasattr(self, "on_engine_event") and self.on_engine_event:
+            try:
+                self.on_engine_event({"event": name})
+            except Exception:
+                pass
 
     # ---------------------------------------------------------
     # Step 1: Erase disk
     # ---------------------------------------------------------
     def _erase_disk(self):
-        out = self._run([
-            "diskutil", "eraseDisk", "JHFS+", "MultiMac", "GPT", self.device
-        ])
+        out = self._run(
+            [
+                "diskutil",
+                "eraseDisk",
+                "JHFS+",
+                "MultiMac",
+                "GPT",
+                self.device,
+            ]
+        )
         if out.strip():
             write_log(out)
-
 
     # ---------------------------------------------------------
     # Step 2: Create partitions (GPT + eraseVolume)
@@ -233,17 +248,25 @@ class BuildEngine:
         # 3. Format slices (macOS will auto‑mount them)
         for index, installer in enumerate(self.installers, start=2):
             slice_id = f"{self.device}s{index}"
-            self._run([
-                "diskutil", "eraseVolume", "HFS+", installer.name, slice_id
-            ])
+            self._run(
+                [
+                    "diskutil",
+                    "eraseVolume",
+                    "HFS+",
+                    installer.name,
+                    slice_id,
+                ]
+            )
 
     # ---------------------------------------------------------
-    # Step 3: Run CIM
+    # Step 3: Run CIM (USB build path)
     # ---------------------------------------------------------
     def _run_cim(self, installer):
         cim_path = os.path.join(
             installer.path,
-            "Contents", "Resources", "createinstallmedia"
+            "Contents",
+            "Resources",
+            "createinstallmedia",
         )
 
         safe_name = installer.name
@@ -256,14 +279,17 @@ class BuildEngine:
         if installer.name == "Sierra":
             cmd = [
                 cim_path,
-                "--volume", volume_path,
-                "--applicationpath", installer.path,
+                "--volume",
+                volume_path,
+                "--applicationpath",
+                installer.path,
                 "--nointeraction",
             ]
         else:
             cmd = [
                 cim_path,
-                "--volume", volume_path,
+                "--volume",
+                volume_path,
                 "--nointeraction",
             ]
 
@@ -272,12 +298,11 @@ class BuildEngine:
             self.on_log(out)
 
         self.on_installer_done(installer.name)
-
         self._progress("Finalizing installer…", 0)
 
-        
-
-
+    # ---------------------------------------------------------
+    # ISO conversion path (Option C events)
+    # ---------------------------------------------------------
     def convert_installer_to_iso(self, installer_path: str, output_dir: str) -> str:
         # --- BASIC NAMES ---
         name = os.path.basename(installer_path).replace(".app", "")
@@ -325,39 +350,61 @@ class BuildEngine:
                 pass
 
         # --- CREATE SPARSEIMAGE ---
-        self._run([
-            "hdiutil", "create",
-            "-o", temp_sparse,
-            "-size", "16g",
-            "-layout", "SPUD",
-            "-fs", "HFS+J",
-        ])
+        self._run(
+            [
+                "hdiutil",
+                "create",
+                "-o",
+                temp_sparse,
+                "-size",
+                "16g",
+                "-layout",
+                "SPUD",
+                "-fs",
+                "HFS+J",
+            ]
+        )
+        self._event("SPARSEIMAGE_CREATED")
 
         # --- MOUNT SPARSEIMAGE ---
-        self._run([
-            "hdiutil", "attach",
-            temp_sparse,
-            "-noverify",
-            "-nobrowse",
-            "-mountpoint", build_mount,
-        ])
+        self._run(
+            [
+                "hdiutil",
+                "attach",
+                temp_sparse,
+                "-noverify",
+                "-nobrowse",
+                "-mountpoint",
+                build_mount,
+            ]
+        )
 
         # --- SIERRA SPECIAL CASE ---
         is_sierra = ("Sierra" in name) or ("10.12" in name)
+        self._event("CIM_STARTED")
 
         if is_sierra:
-            self._run([
-                createinstallmedia,
-                "--volume", build_mount,
-                "--applicationpath", installer_path,
-                "--nointeraction",
-            ])
+            self._run(
+                [
+                    createinstallmedia,
+                    "--volume",
+                    build_mount,
+                    "--applicationpath",
+                    installer_path,
+                    "--nointeraction",
+                ]
+            )
         else:
-            self._run([
-                createinstallmedia,
-                "--volume", build_mount,
-                "--nointeraction",
-            ])
+            self._run(
+                [
+                    createinstallmedia,
+                    "--volume",
+                    build_mount,
+                    "--nointeraction",
+                ]
+            )
+
+        self._event("CIM_FINISHED")
 
         # --- DETACH EVERYTHING (osxiso logic) ---
         detach_all()
@@ -374,13 +421,20 @@ class BuildEngine:
                         pass
 
         # --- CONVERT TO ISO ---
-        self._run([
-            "hdiutil", "convert",
-            temp_sparse,
-            "-format", "UDZO",
-            "-o", iso_cdr,
-            "-quiet",
-        ])
+        self._event("ISO_CONVERT_STARTED")
+        self._run(
+            [
+                "hdiutil",
+                "convert",
+                temp_sparse,
+                "-format",
+                "UDZO",
+                "-o",
+                iso_cdr,
+                "-quiet",
+            ]
+        )
+        self._event("ISO_CONVERT_FINISHED")
 
         # --- NORMALIZE OUTPUT (osxiso style) ---
         base = iso_cdr[:-4]  # strip .cdr
@@ -408,18 +462,4 @@ class BuildEngine:
         print(f"[ISO] Done: {final_iso}")
         sys.stdout.flush()
 
-        # --- RETURN TO MULTIMAC MAIN MENU ---
-        self.show_main_menu()
-
         return final_iso
-
-
-
-
-
-
-
-
-
-
-
