@@ -303,8 +303,27 @@ class BuildEngine:
     # ---------------------------------------------------------
     # ISO conversion path (Option C events)
     # ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # ISO conversion path (Option C events)
+    # ---------------------------------------------------------
     def convert_installer_to_iso(self, installer_path: str, output_dir: str) -> str:
-        # --- BASIC NAMES ---
+        from pathlib import Path
+        import pwd
+        import os
+
+        # -----------------------------------------------------
+        # FIX: Normalize output directory to REAL user path
+        # -----------------------------------------------------
+        output_dir = str(Path(output_dir).resolve())
+
+        # If macOS rewrote the path to /var/root, fix it
+        real_home = pwd.getpwuid(os.getuid()).pw_dir
+        if output_dir.startswith("/var/root"):
+            output_dir = output_dir.replace("/var/root", real_home, 1)
+
+        # -----------------------------------------------------
+        # BASIC NAMES
+        # -----------------------------------------------------
         name = os.path.basename(installer_path).replace(".app", "")
         safe = name.replace(" ", "_")
 
@@ -319,13 +338,17 @@ class BuildEngine:
             "createinstallmedia",
         )
 
-        # --- MOUNTPOINTS (osxiso style) ---
+        # -----------------------------------------------------
+        # MOUNTPOINTS
+        # -----------------------------------------------------
         build_mount = "/Volumes/install_build"
         base_mount = "/Volumes/OS X Base System"
         app_mount = "/Volumes/install_app"
         install_mount = f"/Volumes/Install {name}"
 
-        # --- UNIVERSAL DETACH (osxiso logic) ---
+        # -----------------------------------------------------
+        # UNIVERSAL DETACH
+        # -----------------------------------------------------
         def detach_all():
             for mp in [install_mount, app_mount, base_mount, build_mount]:
                 if os.path.isdir(mp):
@@ -334,7 +357,9 @@ class BuildEngine:
                     except Exception:
                         pass
 
-        # --- PREP CLEANUP ---
+        # -----------------------------------------------------
+        # PREP CLEANUP
+        # -----------------------------------------------------
         detach_all()
         if os.path.exists(temp_sparse):
             try:
@@ -342,14 +367,18 @@ class BuildEngine:
             except Exception:
                 pass
 
-        # --- KILL AUTO-MOUNT PROCESSES (osxiso-inspired) ---
+        # -----------------------------------------------------
+        # KILL AUTO-MOUNT PROCESSES
+        # -----------------------------------------------------
         for proc in ["Finder", "DiskImageMounter", "mds", "mdworker", "asr"]:
             try:
                 self._run(["killall", proc])
             except Exception:
                 pass
 
-        # --- CREATE SPARSEIMAGE ---
+        # -----------------------------------------------------
+        # CREATE SPARSEIMAGE
+        # -----------------------------------------------------
         self._run(
             [
                 "hdiutil",
@@ -366,7 +395,9 @@ class BuildEngine:
         )
         self._event("SPARSEIMAGE_CREATED")
 
-        # --- MOUNT SPARSEIMAGE ---
+        # -----------------------------------------------------
+        # MOUNT SPARSEIMAGE
+        # -----------------------------------------------------
         self._run(
             [
                 "hdiutil",
@@ -379,7 +410,9 @@ class BuildEngine:
             ]
         )
 
-        # --- SIERRA SPECIAL CASE ---
+        # -----------------------------------------------------
+        # RUN CREATEINSTALLMEDIA
+        # -----------------------------------------------------
         is_sierra = ("Sierra" in name) or ("10.12" in name)
         self._event("CIM_STARTED")
 
@@ -406,21 +439,25 @@ class BuildEngine:
 
         self._event("CIM_FINISHED")
 
-        # --- DETACH EVERYTHING (osxiso logic) ---
+        # -----------------------------------------------------
+        # DETACH EVERYTHING
+        # -----------------------------------------------------
         detach_all()
 
-        # --- FINAL DOUBLE-PASS DETACH (Mojave fix) ---
+        # Mojave double-pass detach
         for _ in range(2):
             info = self._run(["hdiutil", "info"])
             for line in info.splitlines():
                 if build_mount in line or name in line:
-                    disk = line.split()[0]  # /dev/diskX
+                    disk = line.split()[0]
                     try:
                         self._run(["hdiutil", "detach", "-force", disk])
                     except Exception:
                         pass
 
-        # --- CONVERT TO ISO ---
+        # -----------------------------------------------------
+        # CONVERT TO ISO
+        # -----------------------------------------------------
         self._event("ISO_CONVERT_STARTED")
         self._run(
             [
@@ -436,8 +473,10 @@ class BuildEngine:
         )
         self._event("ISO_CONVERT_FINISHED")
 
-        # --- NORMALIZE OUTPUT (osxiso style) ---
-        base = iso_cdr[:-4]  # strip .cdr
+        # -----------------------------------------------------
+        # NORMALIZE OUTPUT
+        # -----------------------------------------------------
+        base = iso_cdr[:-4]
         candidates = [
             iso_cdr,
             base,
@@ -455,7 +494,9 @@ class BuildEngine:
         if actual is None:
             raise RuntimeError("ISO conversion failed: no output file produced")
 
-        # --- FINAL RENAME ---
+        # -----------------------------------------------------
+        # FINAL RENAME
+        # -----------------------------------------------------
         final_iso = base if base.endswith(".iso") else base + ".iso"
         self._run(["mv", actual, final_iso])
 
