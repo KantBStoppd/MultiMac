@@ -1,22 +1,15 @@
-# **MultiMac — Multi‑macOS USB Installer Builder**
+# **MultiMac — An AIO macOS Installation maker**
 [![Download MultiMac](https://img.shields.io/badge/Download-MultiMac-blue)](https://www.dropbox.com/scl/fi/w771ngfbylxg45w75ngn1/MultiMac2.0.dmg?rlkey=98po340ooo7up151nef000vvl&st=dt5385n7&dl=1)
 
-A fast, reliable, GUI‑driven tool for creating **multiple macOS installers on a single USB drive**.  
-MultiMac automatically partitions the target disk, formats each slice, and runs Apple’s official `createinstallmedia` for every macOS version you select.
+Make yourself a Bootable macOS Install USB Drive wih as many versions of macOS as you want or Make one USB drive that contains all 10.
 
-Built for technicians, power users, and anyone who maintains multiple Macs.
+This tool was built for technicians, power users, and anyone who maintains multiple Macs.
 
 ---
 
 ## ✨ Features
-- **Multi‑installer USB creation** — build 2–8 macOS installers on one drive  
-- **Automatic GPT partitioning** using raw‑device access  
-- **Automatic `createinstallmedia` execution** for each installer  
-- **Modern Python 3.12 engine**  
-- **PyInstaller‑bundled macOS app**  
-- **Sudo Companion launcher** for proper elevated execution  
-- **Clean, simple GUI** built with wxPython  
-- **Full logging** to `~/MultiMacOSInstaller.log`
+- If you are missing any of the macOS Installers you can download them from inside the app
+- (Added in Version 2.0) You can convert any macOS Inatall.app to ISO to attach to a new Virtual Machine CD/DVD drive so you can boot up a mac and install macOS.
 
 ---
 
@@ -51,27 +44,27 @@ Built for technicians, power users, and anyone who maintains multiple Macs.
 </p>
 
 ## 🖥️ Supported macOS Versions
-MultiMac supports all macOS installers that use `createinstallmedia`, including:
+MultiMac supports all macOS installers from the "macOS Era"
 
-- macOS Sierra  
-- macOS High Sierra  
-- macOS Mojave  
-- macOS Catalina  
-- macOS Big Sur  
-- macOS Monterey  
-- macOS Ventura  
-- macOS Sonoma  
-- macOS Sequoia  
-
-
+- macOS 10.12 Sierra  
+- macOS 10.13 High Sierra  
+- macOS 10.14 Mojave  
+- macOS 10.15 Catalina  
+- macOS 11 Big Sur  
+- macOS 12 Monterey  
+- macOS 13 Ventura  
+- macOS 14 Sonoma  
+- macOS 15 Sequoia
+- macOS 26 Tahoe  
 
 ---
 
 ## 🧰 Requirements
-- macOS host system  
-- Python not required for end‑users (PyInstaller bundle)  
-- USB drive **32GB minimum** (64GB+ recommended)  
-- Official macOS installer apps in `/Applications`
+- System running macOS
+-   
+- USB drive **32GB minimum** (64GB+ recommended) This depends on how many installers you want to include on your drive.
+- 
+- macOS installer apps located in `/Applications`
 
 ---
 
@@ -81,24 +74,18 @@ Download the latest release from the Releases page and place both apps in `/Appl
 - **MultiMac.app**  
 - **MultiMac Launcher.app**
 
-The MultiMac Launcher is required because macOS GUI apps cannot self‑elevate.  
-It launches MultiMac with proper root privileges.
+The MultiMac Launcher is required to launch MultiMac with proper root privileges.
 
 ---
 
 ## 🔧 Usage
 1. Launch **MultiMac Launcher.app**  
 2. Enter your administrator password  
-3. MultiMac opens with full root privileges 
-4. Select your target USB drive 
-5. Select your macOS installers  
+3. Select your target USB drive 
+4. Select your macOS installers  
 6. Preview build summary and click next  
 7. Click **Start**  
-8. MultiMac will:
-   - Erase the disk  
-   - Create GPT partitions  
-   - Format each slice  
-   - Run `createinstallmedia` for each installer  
+8. Wait for your Build to Finish 
 
 ---
 
