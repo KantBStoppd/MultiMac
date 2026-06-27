@@ -43,6 +43,18 @@ This tool was built for technicians, power users, and anyone who maintains multi
   <img src="assets/ss7.png" width="80%" alt="Screenshot 7">
 </p>
 
+<p align="center">
+  <img src="assets/ss8.png" width="80%" alt="Screenshot 8">
+</p>
+
+<p align="center">
+  <img src="assets/ss9.png" width="80%" alt="Screenshot 9">
+</p>
+
+<p align="center">
+  <img src="assets/ss10.png" width="80%" alt="Screenshot 10">
+</p>
+
 ## 🖥️ Supported macOS Versions
 MultiMac supports all macOS installers from the "macOS Era"
 
